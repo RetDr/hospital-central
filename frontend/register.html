@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Hospital Central</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg, #3CA55C, #B5AC49 100%); min-height: 100vh; }
+    .card-register { max-width: 440px; margin:auto; box-shadow: 0 2px 18px #2227; border-radius: 20px;}
+    .hospital-logo { width: 70px; margin-bottom: 16px;}
+    .submit-btn { background: linear-gradient(90deg, #FFD200 55%, #FFA000 100%); border: none; color: #222; }
+    .submit-btn:hover { background: linear-gradient(90deg, #FFA000 40%, #FFD200 100%); }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="card card-register p-4">
+      <img src="https://img.icons8.com/stickers/100/hospital-3.png" alt="hospital" class="hospital-logo mx-auto d-block rounded-circle">
+      <h3 class="text-center mb-1">Registro Hospital Central</h3>
+      <form id="registerForm">
+        <div class="form-group mb-3">
+          <input type="text" class="form-control" id="registerNombre" placeholder="Nombre completo" required>
+        </div>
+        <div class="form-group mb-3">
+          <input type="email" class="form-control" id="registerEmail" placeholder="Correo institucional" required>
+        </div>
+        <div class="form-group mb-3">
+          <input type="password" class="form-control" id="registerPassword" placeholder="Contraseña" required>
+        </div>
+        <div class="form-group mb-3">
+          <select class="form-select" id="registerRol" required>
+            <option value="" disabled selected>Tipo de Usuario</option>
+            <option value="medico">Médico</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <button type="submit" class="btn submit-btn w-100 mb-2">Crear cuenta</button>
+        <div class="text-center">
+          <a href="login.html" class="link-dark">¿Ya tienes cuenta? Iniciar sesión</a>
+        </div>
+      </form>
+      <div id="registerError" class="alert alert-danger mt-2 d-none"></div>
+      <div id="registerSuccess" class="alert alert-success mt-2 d-none"></div>
+    </div>
+  </div>
+<script>
+document.getElementById("registerForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const nombre = document.getElementById("registerNombre").value;
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
+  const rol = document.getElementById("registerRol").value;
+  const response = await fetch("/api/register", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({nombre, email, password, rol})
+  });
+  const data = await response.json();
+  if(response.ok){
+    document.getElementById("registerSuccess").textContent = "Registro exitoso, inicia sesión.";
+    document.getElementById("registerSuccess").classList.remove("d-none");
+    setTimeout(()=>{ window.location.href = "login.html"; }, 1500);
+  }else{
+    document.getElementById("registerError").textContent = data.msg || "Error al registrar";
+    document.getElementById("registerError").classList.remove("d-none");
+  }
+});
+</script>
+</body>
+</html>

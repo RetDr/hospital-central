@@ -1,0 +1,21 @@
+DB_HOST=localhost
+DB_USER=admin_hosp
+DB_PASSWORD=Daniel11052003
+DB_NAME=hospital
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# DB
+*.ibd
+*.frm
+*.myd
+*.sqlite
+*.db
+.env
+
+# Otros
+node_modules/
+.env

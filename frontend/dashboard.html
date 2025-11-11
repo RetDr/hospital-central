@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Central - Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #F5F7FA; }
+    .navbar { background: linear-gradient(90deg, #11998e 70%, #38ef7d 100%); }
+    .sidebar { background: #ecf0f1; min-height: 100vh; }
+    .sidebar .nav-link.active { background: #38ef7d; color: #222; font-weight: bold;}
+    .table thead th { background: #38ef7d; color: #222;}
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+  <div class="container-fluid">
+    <img src="https://img.icons8.com/stickers/64/hospital-3.png" width="42">
+    <span class="navbar-brand ms-2">Hospital Central</span>
+    <div class="d-flex ms-auto">
+      <span id="navbarUser" class="me-3 text-white"></span>
+      <a class="btn btn-sm btn-outline-light" href="login.html" onclick="localStorage.clear()">Salir</a>
+    </div>
+  </div>
+</nav>
+<div class="container-fluid">
+  <div class="row">
+    <div class="sidebar col-md-2 p-3">
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('pacientes')">Pacientes</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('medicos')">Médicos</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('citas')">Citas</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('usuarios')">Usuarios</a></li>
+      </ul>
+    </div>
+    <div class="col-md-10 py-4">
+      <!-- Pacientes -->
+      <div id="pacientesTab">
+        <h4 class="mb-3">Pacientes 
+          <button id="btnAddPaciente" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalPaciente">Agregar</button>
+        </h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Documento</th><th>Nombre</th><th>Edad</th><th>Género</th><th>Email</th><th></th></tr></thead>
+            <tbody id="tblPacientes"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Médicos -->
+      <div id="medicosTab" style="display:none;">
+        <h4 class="mb-3">Médicos 
+          <button id="btnAddMedico" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalMedico">Agregar</button>
+        </h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Especialidad</th><th>Registro</th><th>Teléfono</th><th>Email</th><th></th></tr></thead>
+            <tbody id="tblMedicos"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Citas -->
+      <div id="citasTab" style="display:none;">
+        <h4 class="mb-3">Citas 
+          <button id="btnAddCita" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalCita">Agregar</button>
+        </h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Paciente</th><th>Médico</th><th>Fecha</th><th>Estado</th><th>Prioridad</th><th></th></tr></thead>
+            <tbody id="tblCitas"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Usuarios -->
+      <div id="usuariosTab" style="display:none;">
+        <h4 class="mb-3">Usuarios 
+          <button id="btnAddUsuario" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalUsuario">Agregar</button>
+        </h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th></th></tr></thead>
+            <tbody id="tblUsuarios"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<!-- PACIENTES -->
+<div class="modal fade" id="modalPaciente" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="formPaciente">
+      <div class="modal-header"><h5 class="modal-title">Paciente</h5></div>
+      <div class="modal-body">
+        <input id="pacienteId" type="hidden">
+        <input id="pacienteDoc" class="form-control" placeholder="Documento"><br>
+        <input id="pacienteNom" class="form-control" placeholder="Nombre"><br>
+        <input id="pacienteEdad" class="form-control" type="number" min="0" placeholder="Edad"><br>
+        <input id="pacienteGen" class="form-control" placeholder="Género"><br>
+        <input id="pacienteEmail" class="form-control" type="email" placeholder="Email"><br>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<!-- MÉDICOS -->
+<div class="modal fade" id="modalMedico" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="formMedico">
+      <div class="modal-header"><h5 class="modal-title">Médico</h5></div>
+      <div class="modal-body">
+        <input id="medicoId" type="hidden">
+        <input id="medicoNom" class="form-control" placeholder="Nombre"><br>
+        <select id="medicoEspSel" class="form-control" required></select><br>
+        <input id="medicoReg" class="form-control" placeholder="Registro"><br>
+        <input id="medicoTel" class="form-control" placeholder="Teléfono"><br>
+        <input id="medicoEmail" class="form-control" type="email" placeholder="Email"><br>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<!-- CITAS -->
+<div class="modal fade" id="modalCita" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="formCita">
+      <input id="citaId" type="hidden">
+      <div class="modal-header"><h5 class="modal-title">Cita</h5></div>
+      <div class="modal-body">
+        <select id="citaPacienteSel" class="form-control" required></select><br>
+        <select id="citaMedicoSel" class="form-control" required></select><br>
+        <input id="citaFecha" class="form-control" type="datetime-local" required><br>
+        <input id="citaMotivo" class="form-control" placeholder="Motivo" required><br>
+        <select id="citaEstado" class="form-control" required><br>
+        <option value="programada">programada</option>
+        <option value="realizada">realizada</option>
+        <option value="cancelada">cancelada</option>
+        </select><br>
+        <select id="citaPrioridad" class="form-control" required><br>
+          <option value="baja">baja</option>
+          <option value="media">media</option>
+          <option value="alta">alta</option>
+        </select>
+
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<!-- USUARIOS -->
+<div class="modal fade" id="modalUsuario" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form id="formUsuario">
+      <div class="modal-header"><h5 class="modal-title">Usuario</h5></div>
+      <div class="modal-body">
+        <input id="usuarioId" type="hidden">
+        <input id="usuarioNom" class="form-control" placeholder="Nombre"><br>
+        <input id="usuarioEmail" class="form-control" type="email" placeholder="Email"><br>
+        <input id="usuarioPass" class="form-control" type="password" placeholder="Contraseña"><br>
+        <select id="usuarioRol" class="form-control">
+          <option value="admin">admin</option>
+          <option value="medico">medico</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Tabs
+function showTab(tab){
+  document.getElementById('pacientesTab').style.display = tab==='pacientes'? '' : 'none';
+  document.getElementById('medicosTab').style.display = tab==='medicos'? '' : 'none';
+  document.getElementById('citasTab').style.display = tab==='citas'? '' : 'none';
+  document.getElementById('usuariosTab').style.display = tab==='usuarios'? '' : 'none';
+  document.querySelectorAll('.sidebar .nav-link').forEach(e=>e.classList.remove('active'));
+  document.querySelector('.sidebar .nav-link[onclick="showTab(\''+tab+'\')"]').classList.add('active');
+}
+const token = localStorage.getItem('token');
+if (!token) window.location.href = "login.html";
+let userRol = "anonimo";
+// Obtener usuario actual y configurar permisos
+fetch("/api/user", {headers:{"Authorization":`Bearer ${token}`}})
+.then(r=>r.json())
+.then(data=>{
+    userRol = data.rol;
+    document.getElementById("navbarUser").textContent = `${data.nombre || "Anonimo"} (${data.rol})`;
+    document.getElementById("btnAddPaciente").style.display = ((userRol==="admin"||userRol==="medico")?"":"none");
+    document.getElementById("btnAddMedico").style.display = (userRol==="admin")?"":"none";
+    document.getElementById("btnAddCita").style.display = ((userRol==="admin"||userRol==="medico")?"":"none");
+    document.getElementById("btnAddUsuario").style.display = (userRol==="admin")?"":"none";
+    cargarPacientes(); cargarMedicos(); cargarCitas(); cargarUsuarios();
+});
+
+// CRUD Pacientes
+document.getElementById("formPaciente").onsubmit = function(e){
+  e.preventDefault();
+  const id = pacienteId.value;
+  const data = {
+    documento: pacienteDoc.value,
+    nombre: pacienteNom.value,
+    edad: pacienteEdad.value,
+    genero: pacienteGen.value,
+    email: pacienteEmail.value
+  };
+  let url = "/pacientes", method = "POST";
+  if(id){ url = `/pacientes/${id}`; method = "PUT"; }
+  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
+  .then(r=>r.json()).then(resp=>{
+    alert(resp.msg); document.querySelector('#modalPaciente .btn-secondary').click();
+    cargarPacientes();
+  });
+};
+function cargarPacientes(){
+  fetch("/pacientes",{headers:{"Authorization":`Bearer ${token}`}})
+  .then(r=>r.json())
+  .then(data=>{
+    const tb = document.getElementById("tblPacientes");
+    tb.innerHTML = "";
+    data.forEach(p=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${p.id}</td><td>${p.documento}</td><td>${p.nombre}</td><td>${p.edad}</td><td>${p.genero}</td><td>${p.email}</td>
+      <td>
+      ${(userRol=="admin"||userRol=="medico")?`
+        <button onclick="editarPaciente(${p.id},'${p.documento}','${p.nombre}',${p.edad},'${p.genero}','${p.email}')" class="btn btn-warning btn-sm">Editar</button>
+        <button onclick="borrarPaciente(${p.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
+      </td>`;
+      tb.appendChild(tr);
+    });
+  });
+}
+
+document.getElementById('btnAddMedico').addEventListener('click', fillEspecialidadSelect);
+
+function fillEspecialidadSelect() {
+  fetch("/especialidades",{headers:{"Authorization":`Bearer ${token}`}})
+  .then(r=>r.json())
+  .then(data=>{
+    medicoEspSel.innerHTML = data.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  });
+}
+
+
+function editarPaciente(id,doc,nom,edad,gen,email){
+  pacienteId.value=id; pacienteDoc.value=doc; pacienteNom.value=nom;
+  pacienteEdad.value=edad; pacienteGen.value=gen; pacienteEmail.value=email;
+  new bootstrap.Modal(document.getElementById("modalPaciente")).show();
+}
+function borrarPaciente(id){
+  if(confirm("¿Seguro que deseas eliminar?")){
+    fetch(`/pacientes/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
+    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarPacientes();});
+  }
+}
+
+// CRUD Medicos
+document.getElementById("formMedico").onsubmit = function(e){
+  e.preventDefault();
+  const id = medicoId.value;
+const data = {
+  nombre: medicoNom.value,
+  especialidad_id: medicoEspSel.value,
+  registro_medico: medicoReg.value,
+  telefono: medicoTel.value,
+  email: medicoEmail.value
+};
+  let url = "/medicos", method = "POST";
+  if(id){ url = `/medicos/${id}`; method = "PUT"; }
+  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
+  .then(r=>r.json()).then(resp=>{
+    alert(resp.msg); document.querySelector('#modalMedico .btn-secondary').click();
+    cargarMedicos();
+  });
+};
+
+function cargarMedicos(){
+  fetch("/medicos",{headers:{"Authorization":`Bearer ${token}`}})
+  .then(r=>r.json())
+  .then(data=>{
+    const tb = document.getElementById("tblMedicos");
+    tb.innerHTML="";
+    data.forEach(m=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${m.id}</td><td>${m.nombre}</td><td>${m.especialidad}</td>
+      <td>${m.registro}</td><td>${m.telefono}</td><td>${m.email}</td>
+      <td>${(userRol=="admin")?`
+        <button onclick="editarMedico(${m.id},'${m.nombre}','${m.especialidad}','${m.registro}','${m.telefono}','${m.email}')" class="btn btn-warning btn-sm">Editar</button>
+        <button onclick="borrarMedico(${m.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}</td>`;
+      tb.appendChild(tr);
+    });
+  });
+}
+function editarMedico(id,nom,esp,reg,tel,email){
+  medicoId.value=id; medicoNom.value=nom; medicoEsp.value=esp;
+  medicoReg.value=reg; medicoTel.value=tel; medicoEmail.value=email;
+  new bootstrap.Modal(document.getElementById("modalMedico")).show();
+}
+function borrarMedico(id){
+  if(confirm("¿Seguro que deseas eliminar?")){
+    fetch(`/medicos/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
+    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarMedicos();});
+  }
+}
+
+// CRUD Citas
+document.getElementById("formCita").onsubmit = function(e){
+  e.preventDefault();
+  const id = citaId.value;
+  const data = {
+  paciente_id: citaPacienteSel.value,
+  medico_id: citaMedicoSel.value,
+  fecha: citaFecha.value,
+  estado: citaEstado.value,
+  prioridad: citaPrioridad.value,
+  motivo: citaMotivo.value
+};
+  console.log(data); 
+  let url = "/citas", method = "POST";
+  if(id){ url = `/citas/${id}`; method = "PUT"; }
+  fetch(url, {
+      method: method,
+      headers: { "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
+      body: JSON.stringify(data)
+  })
+  .then(r=>r.json()).then(resp=>{
+    alert(resp.msg); document.querySelector('#modalCita .btn-secondary').click();
+    cargarCitas();
+  });
+};
+
+function cargarCitas(){
+  fetch("/citas",{headers:{"Authorization":`Bearer ${token}`}})
+  .then(r=>r.json())
+  .then(data=>{
+    const tb=document.getElementById("tblCitas");
+    tb.innerHTML="";
+    data.forEach(c=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+      <td>${c.id}</td><td>${c.paciente}</td><td>${c.medico}</td>
+      <td>${c.fecha}</td><td>${c.estado}</td><td>${c.prioridad}</td>
+      <td>${(userRol=="admin"||userRol=="medico")?`
+        <button onclick="editarCita(${c.id},'${c.paciente_id}','${c.medico_id}','${c.fecha}','${c.estado}','${c.prioridad}')" class="btn btn-warning btn-sm">Editar</button>
+        <button onclick="borrarCita(${c.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
+      </td>`;
+      tb.appendChild(tr);
+    });
+  });
+}
+// Select dinámico pacientes y médicos en modal cita
+function fillCitaSelects(){
+    fetch("/pacientes",{headers:{"Authorization":`Bearer ${token}`}})
+      .then(r=>r.json())
+      .then(data=>{
+        citaPacienteSel.innerHTML = data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+      });
+    fetch("/medicos",{headers:{"Authorization":`Bearer ${token}`}})
+      .then(r=>r.json())
+      .then(data=>{
+        citaMedicoSel.innerHTML = data.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+      });
+}
+document.getElementById('btnAddCita').addEventListener('click', fillCitaSelects);
+
+function editarCita(id,pacId,medId,fecha,est,pri){
+  citaId.value=id; citaFecha.value=fecha; citaEstado.value=est; citaPrioridad.value=pri;
+  fillCitaSelects();
+  setTimeout(()=>{citaPacienteSel.value=pacId; citaMedicoSel.value=medId;},400); // espera por render
+  new bootstrap.Modal(document.getElementById("modalCita")).show();
+}
+function borrarCita(id){
+  if(confirm("¿Seguro que deseas eliminar?")){
+    fetch(`/citas/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
+    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarCitas();});
+  }
+}
+
+// CRUD Usuarios
+document.getElementById("formUsuario").onsubmit = function(e){
+  e.preventDefault();
+  const id = usuarioId.value;
+  const data = {
+    nombre: usuarioNom.value,
+    email: usuarioEmail.value,
+    password: usuarioPass.value,
+    rol: usuarioRol.value
+  };
+  let url = "/usuarios", method = "POST";
+  if(id){ url = `/usuarios/${id}`; method = "PUT"; }
+  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
+  .then(r=>r.json()).then(resp=>{
+    alert(resp.msg); document.querySelector('#modalUsuario .btn-secondary').click();
+    cargarUsuarios();
+  });
+};
+function cargarUsuarios(){
+  fetch("/usuarios",{headers:{"Authorization":`Bearer ${token}`}})
+  .then(r=>r.json())
+  .then(data=>{
+    const tb = document.getElementById("tblUsuarios");
+    tb.innerHTML = "";
+    data.forEach(u=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+      <td>${u.id}</td>
+      <td>${u.nombre}</td>
+      <td>${u.email}</td>
+      <td>${u.rol}</td>
+      <td>
+        ${(userRol=="admin")?
+          `<button onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')" class="btn btn-warning btn-sm">Editar</button>
+           <button onclick="borrarUsuario(${u.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
+      </td>`;
+      tb.appendChild(tr);
+    });
+  });
+}
+function editarUsuario(id, nom, email, rol){
+  usuarioId.value = id;
+  usuarioNom.value = nom;
+  usuarioEmail.value = email;
+  usuarioPass.value = ""; // solo cambia si se edita
+  usuarioRol.value = rol;
+  new bootstrap.Modal(document.getElementById("modalUsuario")).show();
+}
+function borrarUsuario(id){
+  if(confirm("¿Seguro que deseas eliminar?")){
+    fetch(`/usuarios/${id}`,{
+      method:"DELETE",
+      headers:{"Authorization":`Bearer ${token}`}
+    })
+    .then(r=>r.json())
+    .then(resp=>{
+      alert(resp.msg); cargarUsuarios();
+    });
+  }
+}
+</script>
+</body>
+</html>

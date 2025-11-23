@@ -72,31 +72,44 @@ def crear_cita():
 @roles_required('admin', 'medico')
 def editar_cita(id):
     data = request.get_json()
+    if not data:
+        return jsonify({'msg': 'Datos no recibidos'}), 400
+
     try:
-        fecha_obj = datetime.fromisoformat(data['fecha'])
-        if fecha_obj <= datetime.now():
-            return jsonify({'msg': 'La fecha debe ser futura'}), 400
-        if data['estado'] not in ['programada', 'realizada', 'cancelada']:
-            return jsonify({'msg': 'Estado no válido'}), 400
-        if data['prioridad'] not in ['baja', 'media', 'alta']:
-            return jsonify({'msg': 'Prioridad no válida'}), 400
+        fecha_str = data.get('fecha', '')
+        if 'T' in fecha_str:
+            fecha_obj = datetime.fromisoformat(fecha_str.replace('Z', ''))
+        else:
+            fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+
+        estado = data.get('estado', 'programada')
+        if estado not in ['programada', 'realizada', 'cancelada', 'atendida']:
+            return jsonify({'msg': 'Estado no valido'}), 400
+
+        prioridad = data.get('prioridad', 'media')
+        if prioridad not in ['baja', 'media', 'alta']:
+            return jsonify({'msg': 'Prioridad no valida'}), 400
+
     except Exception as e:
-        return jsonify({'msg': 'Error de formato de fecha', 'error': str(e)}), 400
+        return jsonify({'msg': f'Error de formato: {str(e)}'}), 400
+
     conn = get_connection()
     cursor = conn.cursor()
-    # Validar existencia
-    cursor.execute("SELECT id FROM pacientes WHERE id=%s", (data['paciente_id'],))
+
+    cursor.execute("SELECT id FROM pacientes WHERE id=%s", (data.get('paciente_id'),))
     if not cursor.fetchone():
         cursor.close(); conn.close()
         return jsonify({'msg': 'Paciente no existe'}), 404
-    cursor.execute("SELECT id FROM medicos WHERE id=%s", (data['medico_id'],))
+
+    cursor.execute("SELECT id FROM medicos WHERE id=%s", (data.get('medico_id'),))
     if not cursor.fetchone():
         cursor.close(); conn.close()
-        return jsonify({'msg': 'Médico no existe'}), 404
+        return jsonify({'msg': 'Medico no existe'}), 404
+
     cursor.execute("""
         UPDATE citas SET paciente_id=%s, medico_id=%s, fecha=%s, estado=%s, motivo=%s, prioridad=%s
         WHERE id=%s
-    """, (data['paciente_id'], data['medico_id'], data['fecha'], data['estado'], data['motivo'], data['prioridad'], id))
+    """, (data.get('paciente_id'), data.get('medico_id'), fecha_str, estado, data.get('motivo', ''), prioridad, id))
     conn.commit()
     cursor.close(); conn.close()
     return jsonify({'msg': 'Cita actualizada'}), 200

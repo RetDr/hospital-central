@@ -1,21 +1,43 @@
-DB_HOST=localhost
-DB_USER=admin_hosp
-DB_PASSWORD=Daniel11052003
-DB_NAME=hospital
+# ==== VARIABLES DE ENTORNO ====
+.env
+.env.local
+.env.production
+.env.development
 
-# Python
+# ==== ARCHIVOS DE GEMINI / IA ====
+gemini.js
+geminichat.js
+edit.js
+listmodels.js
+
+# Cualquier carpeta o archivo de Gemini
+gemini/
+ai/
+api/
+secrets/
+keys/
+*.key
+*.secret
+*.pem
+gemini_config.json
+
+# ==== NODE ====
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# ==== PYTHON ====
 __pycache__/
 *.pyc
 *.pyo
 
-# DB
+# ==== BASE DE DATOS ====
 *.ibd
 *.frm
 *.myd
 *.sqlite
 *.db
-.env
 
-# Otros
-node_modules/
-.env
+# ==== OTROS ====
+.DS_Store

@@ -5,82 +5,840 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospital Central - Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background: #F5F7FA; }
-    .navbar { background: linear-gradient(90deg, #11998e 70%, #38ef7d 100%); }
-    .sidebar { background: #ecf0f1; min-height: 100vh; }
-    .sidebar .nav-link.active { background: #38ef7d; color: #222; font-weight: bold;}
-    .table thead th { background: #38ef7d; color: #222;}
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --sidebar-bg: #1a1a2e;
+      --sidebar-hover: #16213e;
+      --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: var(--primary-gradient);
+      padding: 0.8rem 1.5rem;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .sidebar {
+      background: var(--sidebar-bg);
+      min-height: calc(100vh - 60px);
+      padding: 1.5rem 0;
+      position: fixed;
+      width: 250px;
+      transition: all 0.3s;
+    }
+
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.7);
+      padding: 12px 25px;
+      margin: 4px 12px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar .nav-link:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .sidebar .nav-link.active {
+      background: var(--success-gradient);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+    }
+
+    .sidebar .nav-link i {
+      font-size: 1.2rem;
+      width: 24px;
+    }
+
+    .sidebar-header {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 20px 25px 10px;
+      margin-top: 10px;
+    }
+
+    .main-content {
+      margin-left: 250px;
+      padding: 2rem;
+      min-height: calc(100vh - 60px);
+      width: calc(100% - 250px);
+      max-width: none;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: none;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    }
+
+    .stat-card .icon-box {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: #fff;
+    }
+
+    .stat-card .icon-box.patients { background: var(--info-gradient); }
+    .stat-card .icon-box.doctors { background: var(--success-gradient); }
+    .stat-card .icon-box.appointments { background: var(--warning-gradient); }
+    .stat-card .icon-box.pending { background: var(--primary-gradient); }
+
+    .stat-card h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1a1a2e;
+    }
+
+    .stat-card p {
+      color: #666;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .content-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .content-card .card-header {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .content-card .card-header h5 {
+      margin: 0;
+      font-weight: 600;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .content-card .card-body {
+      padding: 1.5rem;
+    }
+
+    .table {
+      margin: 0;
+    }
+
+    .table thead th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 1rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .table tbody tr {
+      transition: all 0.2s;
+    }
+
+    .table tbody tr:hover {
+      background: #f8f9ff;
+    }
+
+    .table tbody td {
+      padding: 1rem;
+      vertical-align: middle;
+      border-color: #eee;
+    }
+
+    .btn-action {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      margin: 2px;
+      transition: all 0.2s;
+    }
+
+    .btn-add {
+      background: var(--success-gradient);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-add:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(56, 239, 125, 0.4);
+    }
+
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-programada { background: #e3f2fd; color: #1976d2; }
+    .badge-realizada { background: #e8f5e9; color: #388e3c; }
+    .badge-cancelada { background: #ffebee; color: #d32f2f; }
+    .badge-alta { background: #ffebee; color: #d32f2f; }
+    .badge-media { background: #fff3e0; color: #f57c00; }
+    .badge-baja { background: #e8f5e9; color: #388e3c; }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .quick-action-btn {
+      background: #fff;
+      border: 2px solid #eee;
+      border-radius: 15px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+      text-decoration: none;
+      color: #1a1a2e;
+    }
+
+    .quick-action-btn:hover {
+      border-color: #667eea;
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .quick-action-btn i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 250px;
+    }
+
+    .recent-activity {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 1rem;
+    }
+
+    .activity-icon.new { background: #e3f2fd; color: #1976d2; }
+    .activity-icon.update { background: #fff3e0; color: #f57c00; }
+    .activity-icon.complete { background: #e8f5e9; color: #388e3c; }
+
+    .welcome-banner {
+      background: var(--primary-gradient);
+      border-radius: 20px;
+      padding: 2rem;
+      color: #fff;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      right: -50px;
+      top: -50px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+
+    .welcome-banner h2 {
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-banner p {
+      opacity: 0.9;
+      margin: 0;
+    }
+
+    .modal-content {
+      border-radius: 20px;
+      border: none;
+    }
+
+    .modal-header {
+      background: var(--primary-gradient);
+      color: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    .form-control, .form-select {
+      border-radius: 10px;
+      padding: 12px 15px;
+      border: 2px solid #eee;
+      transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .clock-widget {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      margin: 1rem;
+    }
+
+    .clock-widget .time {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .clock-widget .date {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .profile-card {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      background: var(--primary-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #fff;
+      margin: 0 auto 1rem;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    @media (max-width: 992px) {
+      .sidebar { width: 80px; padding: 1rem 0; }
+      .sidebar .nav-link span { display: none; }
+      .sidebar .nav-link { justify-content: center; padding: 15px; margin: 4px 8px; }
+      .sidebar-header { display: none; }
+      .main-content { margin-left: 80px; width: calc(100% - 80px); }
+      .clock-widget { display: none; }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar { width: 60px; }
+      .sidebar .nav-link { padding: 12px; margin: 2px 4px; }
+      .sidebar .nav-link i { font-size: 1rem; }
+      .main-content { margin-left: 60px; width: calc(100% - 60px); padding: 1rem; }
+      .stat-card { padding: 1rem; }
+      .stat-card h3 { font-size: 1.5rem; }
+      .welcome-banner { padding: 1.5rem; }
+      .welcome-banner h2 { font-size: 1.3rem; }
+    }
+
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    .d-flex {
+      width: 100%;
+    }
+
+    .row {
+      width: 100%;
+      margin: 0;
+    }
+
+    .row > * {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    #inicioTab, #pacientesTab, #medicosTab, #citasTab, #usuariosTab, #miPerfilTab {
+      width: 100%;
+    }
+
+    .table-responsive {
+      width: 100%;
+    }
+
+    .topPageAlert {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1050;
+      max-width: 400px;
+    }
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+
+<nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container-fluid">
-    <img src="https://img.icons8.com/stickers/64/hospital-3.png" width="42">
-    <span class="navbar-brand ms-2">Hospital Central</span>
-    <div class="d-flex ms-auto">
-      <span id="navbarUser" class="me-3 text-white"></span>
-      <a class="btn btn-sm btn-outline-light" href="login.html" onclick="localStorage.clear()">Salir</a>
+    <div class="d-flex align-items-center">
+      <img src="https://img.icons8.com/fluency/48/hospital-room.png" width="42" class="me-2">
+      <span class="navbar-brand">Hospital Central</span>
+    </div>
+    <div class="d-flex align-items-center">
+      <div class="user-avatar" id="userInitials">HC</div>
+      <div class="text-white me-3">
+        <div id="navbarUser" class="fw-bold"></div>
+        <small id="navbarRol" class="opacity-75"></small>
+      </div>
+      <a class="btn btn-outline-light btn-sm" href="login.html" onclick="localStorage.clear()">
+        <i class="bi bi-box-arrow-right"></i> Salir
+      </a>
     </div>
   </div>
 </nav>
-<div class="container-fluid">
-  <div class="row">
-    <div class="sidebar col-md-2 p-3">
-      <ul class="nav flex-column">
-        <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('pacientes')">Pacientes</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('medicos')">Médicos</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('citas')">Citas</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('usuarios')">Usuarios</a></li>
-      </ul>
+
+<div id="topPageAlertContainer" class="topPageAlert"></div>
+
+<div class="d-flex">
+  <div class="sidebar">
+    <div class="clock-widget">
+      <div class="time" id="clockTime">00:00</div>
+      <div class="date" id="clockDate">-</div>
     </div>
-    <div class="col-md-10 py-4">
-      <!-- Pacientes -->
-      <div id="pacientesTab">
-        <h4 class="mb-3">Pacientes 
-          <button id="btnAddPaciente" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalPaciente">Agregar</button>
-        </h4>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead><tr><th>ID</th><th>Documento</th><th>Nombre</th><th>Edad</th><th>Género</th><th>Email</th><th></th></tr></thead>
-            <tbody id="tblPacientes"></tbody>
-          </table>
+
+    <div class="sidebar-header">Principal</div>
+    <ul class="nav flex-column">
+      <li class="nav-item" id="navItemInicio">
+        <a class="nav-link" href="#" onclick="showTab('inicio')">
+          <i class="bi bi-house-door"></i><span>Inicio</span>
+        </a>
+      </li>
+      <li class="nav-item" id="navItemPacientes">
+        <a class="nav-link" href="#" onclick="showTab('pacientes')">
+          <i class="bi bi-people"></i><span>Pacientes</span>
+        </a>
+      </li>
+      <li class="nav-item" id="navItemMedicos">
+        <a class="nav-link" href="#" onclick="showTab('medicos')">
+          <i class="bi bi-person-badge"></i><span>Medicos</span>
+        </a>
+      </li>
+      <li class="nav-item" id="navItemCitas">
+        <a class="nav-link" href="#" onclick="showTab('citas')">
+          <i class="bi bi-calendar-check"></i><span>Citas</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-header" id="adminSection">Administracion</div>
+    <ul class="nav flex-column">
+      <li class="nav-item" id="navItemUsuarios">
+        <a class="nav-link" href="#" onclick="showTab('usuarios')">
+          <i class="bi bi-shield-lock"></i><span>Usuarios</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-header">Cuenta</div>
+    <ul class="nav flex-column">
+      <li class="nav-item" id="navMiPerfil">
+        <a class="nav-link" href="#" onclick="showTab('miPerfil')">
+          <i class="bi bi-person-circle"></i><span>Mi Perfil</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <!-- INICIO / DASHBOARD -->
+    <div id="inicioTab">
+      <div class="welcome-banner">
+        <h2 id="welcomeText">Bienvenido al Sistema</h2>
+        <p id="welcomeSubtext">Panel de control del Hospital Central</p>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p>Total Pacientes</p>
+                <h3 id="statPacientes">0</h3>
+              </div>
+              <div class="icon-box patients">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p>Medicos Activos</p>
+                <h3 id="statMedicos">0</h3>
+              </div>
+              <div class="icon-box doctors">
+                <i class="bi bi-heart-pulse-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p>Citas Hoy</p>
+                <h3 id="statCitasHoy">0</h3>
+              </div>
+              <div class="icon-box appointments">
+                <i class="bi bi-calendar-event-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p>Citas Pendientes</p>
+                <h3 id="statCitasPendientes">0</h3>
+              </div>
+              <div class="icon-box pending">
+                <i class="bi bi-hourglass-split"></i>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Médicos -->
-      <div id="medicosTab" style="display:none;">
-        <h4 class="mb-3">Médicos 
-          <button id="btnAddMedico" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalMedico">Agregar</button>
-        </h4>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead><tr><th>ID</th><th>Nombre</th><th>Especialidad</th><th>Registro</th><th>Teléfono</th><th>Email</th><th></th></tr></thead>
-            <tbody id="tblMedicos"></tbody>
-          </table>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+          <div class="content-card">
+            <div class="card-header">
+              <h5><i class="bi bi-graph-up"></i> Citas por Estado</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="citasChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="content-card h-100">
+            <div class="card-header">
+              <h5><i class="bi bi-lightning-fill"></i> Acciones Rapidas</h5>
+            </div>
+            <div class="card-body">
+              <div class="quick-actions">
+                <div class="quick-action-btn" onclick="showTab('pacientes'); setTimeout(()=>document.getElementById('btnAddPaciente').click(), 100)">
+                  <i class="bi bi-person-plus-fill d-block"></i>
+                  <small>Nuevo Paciente</small>
+                </div>
+                <div class="quick-action-btn" onclick="showTab('citas'); setTimeout(()=>document.getElementById('btnAddCita').click(), 100)">
+                  <i class="bi bi-calendar-plus-fill d-block"></i>
+                  <small>Nueva Cita</small>
+                </div>
+                <div class="quick-action-btn" onclick="showTab('pacientes')">
+                  <i class="bi bi-search d-block"></i>
+                  <small>Buscar Paciente</small>
+                </div>
+                <div class="quick-action-btn" onclick="showTab('citas')">
+                  <i class="bi bi-list-check d-block"></i>
+                  <small>Ver Agenda</small>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Citas -->
-      <div id="citasTab" style="display:none;">
-        <h4 class="mb-3">Citas 
-          <button id="btnAddCita" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalCita">Agregar</button>
-        </h4>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead><tr><th>ID</th><th>Paciente</th><th>Médico</th><th>Fecha</th><th>Estado</th><th>Prioridad</th><th></th></tr></thead>
-            <tbody id="tblCitas"></tbody>
-          </table>
+
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="content-card">
+            <div class="card-header">
+              <h5><i class="bi bi-calendar3"></i> Proximas Citas</h5>
+            </div>
+            <div class="card-body recent-activity" id="proximasCitas">
+              <p class="text-muted text-center py-3">Cargando...</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="content-card">
+            <div class="card-header">
+              <h5><i class="bi bi-pie-chart-fill"></i> Especialidades</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="especialidadesChart"></canvas>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Usuarios -->
-      <div id="usuariosTab" style="display:none;">
-        <h4 class="mb-3">Usuarios 
-          <button id="btnAddUsuario" type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalUsuario">Agregar</button>
-        </h4>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th></th></tr></thead>
-            <tbody id="tblUsuarios"></tbody>
-          </table>
+    </div>
+
+    <!-- PACIENTES -->
+    <div id="pacientesTab" style="display:none;">
+      <div class="content-card">
+        <div class="card-header">
+          <h5><i class="bi bi-people-fill"></i> Gestion de Pacientes</h5>
+          <button id="btnAddPaciente" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#modalPaciente">
+            <i class="bi bi-plus-lg"></i> Nuevo Paciente
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Documento</th>
+                  <th>Nombre</th>
+                  <th>Edad</th>
+                  <th>Genero</th>
+                  <th>Email</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tblPacientes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDICOS -->
+    <div id="medicosTab" style="display:none;">
+      <div class="content-card">
+        <div class="card-header">
+          <h5><i class="bi bi-person-badge-fill"></i> Gestion de Medicos</h5>
+          <button id="btnAddMedico" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#modalMedico">
+            <i class="bi bi-plus-lg"></i> Nuevo Medico
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Especialidad</th>
+                  <th>Registro</th>
+                  <th>Telefono</th>
+                  <th>Email</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tblMedicos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CITAS -->
+    <div id="citasTab" style="display:none;">
+      <div class="content-card">
+        <div class="card-header">
+          <h5><i class="bi bi-calendar-check-fill"></i> Gestion de Citas</h5>
+          <button id="btnAddCita" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#modalCita">
+            <i class="bi bi-plus-lg"></i> Nueva Cita
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Paciente</th>
+                  <th>Medico</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                  <th>Prioridad</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tblCitas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="usuariosTab" style="display:none;">
+      <div class="content-card">
+        <div class="card-header">
+          <h5><i class="bi bi-shield-lock-fill"></i> Gestion de Usuarios</h5>
+          <button id="btnAddUsuario" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#modalUsuario">
+            <i class="bi bi-plus-lg"></i> Nuevo Usuario
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tblUsuarios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MI PERFIL -->
+    <div id="miPerfilTab" style="display:none;">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="content-card">
+            <div class="card-body profile-card">
+              <div class="profile-avatar" id="profileAvatar">
+                <i class="bi bi-person"></i>
+              </div>
+              <h4 id="profileName">-</h4>
+              <p class="text-muted" id="profileEmail">-</p>
+              <span class="badge bg-primary" id="profileRol">Medico</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="content-card">
+            <div class="card-header">
+              <h5><i class="bi bi-pencil-square"></i> Datos Profesionales</h5>
+            </div>
+            <div class="card-body">
+              <div id="medicoPerfilAlert"></div>
+              <form id="formMedicoPerfil">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Especialidad</label>
+                    <select id="medicoPerfilEspecialidad" class="form-select" required></select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Registro Medico</label>
+                    <input id="medicoPerfilRegistro" class="form-control" placeholder="Ej: RM-001" required>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Telefono</label>
+                    <input id="medicoPerfilTelefono" class="form-control" placeholder="Ej: 3001234567" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-add text-white">
+                  <i class="bi bi-check-lg"></i> Guardar Cambios
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -88,128 +846,447 @@
 </div>
 
 <!-- MODALES -->
-<!-- PACIENTES -->
 <div class="modal fade" id="modalPaciente" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content">
-    <form id="formPaciente">
-      <div class="modal-header"><h5 class="modal-title">Paciente</h5></div>
-      <div class="modal-body">
-        <input id="pacienteId" type="hidden">
-        <input id="pacienteDoc" class="form-control" placeholder="Documento"><br>
-        <input id="pacienteNom" class="form-control" placeholder="Nombre"><br>
-        <input id="pacienteEdad" class="form-control" type="number" min="0" placeholder="Edad"><br>
-        <input id="pacienteGen" class="form-control" placeholder="Género"><br>
-        <input id="pacienteEmail" class="form-control" type="email" placeholder="Email"><br>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      </div>
-    </form>
-  </div></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formPaciente">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Paciente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input id="pacienteId" type="hidden">
+          <div class="mb-3">
+            <label class="form-label">Documento</label>
+            <input id="pacienteDoc" class="form-control" placeholder="Numero de documento" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo</label>
+            <input id="pacienteNom" class="form-control" placeholder="Nombre del paciente" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Edad</label>
+              <input id="pacienteEdad" class="form-control" type="number" min="0" placeholder="Edad">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Genero</label>
+              <select id="pacienteGen" class="form-select">
+                <option value="">Seleccionar</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+                <option value="O">Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="pacienteEmail" class="form-control" type="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-add text-white">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
-<!-- MÉDICOS -->
+
 <div class="modal fade" id="modalMedico" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content">
-    <form id="formMedico">
-      <div class="modal-header"><h5 class="modal-title">Médico</h5></div>
-      <div class="modal-body">
-        <input id="medicoId" type="hidden">
-        <input id="medicoNom" class="form-control" placeholder="Nombre"><br>
-        <select id="medicoEspSel" class="form-control" required></select><br>
-        <input id="medicoReg" class="form-control" placeholder="Registro"><br>
-        <input id="medicoTel" class="form-control" placeholder="Teléfono"><br>
-        <input id="medicoEmail" class="form-control" type="email" placeholder="Email"><br>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      </div>
-    </form>
-  </div></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formMedico">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Medico</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input id="medicoId" type="hidden">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo</label>
+            <input id="medicoNom" class="form-control" placeholder="Nombre del medico" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Especialidad</label>
+            <select id="medicoEspSel" class="form-select" required></select>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Registro Medico</label>
+              <input id="medicoReg" class="form-control" placeholder="RM-XXX">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Telefono</label>
+              <input id="medicoTel" class="form-control" placeholder="3001234567">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="medicoEmail" class="form-control" type="email" placeholder="correo@hospital.com">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-add text-white">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
-<!-- CITAS -->
 <div class="modal fade" id="modalCita" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content">
-    <form id="formCita">
-      <input id="citaId" type="hidden">
-      <div class="modal-header"><h5 class="modal-title">Cita</h5></div>
-      <div class="modal-body">
-        <select id="citaPacienteSel" class="form-control" required></select><br>
-        <select id="citaMedicoSel" class="form-control" required></select><br>
-        <input id="citaFecha" class="form-control" type="datetime-local" required><br>
-        <input id="citaMotivo" class="form-control" placeholder="Motivo" required><br>
-        <select id="citaEstado" class="form-control" required><br>
-        <option value="programada">programada</option>
-        <option value="realizada">realizada</option>
-        <option value="cancelada">cancelada</option>
-        </select><br>
-        <select id="citaPrioridad" class="form-control" required><br>
-          <option value="baja">baja</option>
-          <option value="media">media</option>
-          <option value="alta">alta</option>
-        </select>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formCita">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Cita Medica</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input id="citaId" type="hidden">
+          <div class="mb-3">
+            <label class="form-label">Paciente</label>
+            <select id="citaPacienteSel" class="form-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Medico</label>
+            <select id="citaMedicoSel" class="form-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Fecha y Hora</label>
+            <input id="citaFecha" class="form-control" type="datetime-local" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Motivo</label>
+            <input id="citaMotivo" class="form-control" placeholder="Motivo de la consulta" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Estado</label>
+              <select id="citaEstado" class="form-select" required>
+                <option value="programada">Programada</option>
+                <option value="realizada">Realizada</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Prioridad</label>
+              <select id="citaPrioridad" class="form-select" required>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-add text-white">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      </div>
-    </form>
-  </div></div>
-</div>
-<!-- USUARIOS -->
 <div class="modal fade" id="modalUsuario" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content">
-    <form id="formUsuario">
-      <div class="modal-header"><h5 class="modal-title">Usuario</h5></div>
-      <div class="modal-body">
-        <input id="usuarioId" type="hidden">
-        <input id="usuarioNom" class="form-control" placeholder="Nombre"><br>
-        <input id="usuarioEmail" class="form-control" type="email" placeholder="Email"><br>
-        <input id="usuarioPass" class="form-control" type="password" placeholder="Contraseña"><br>
-        <select id="usuarioRol" class="form-control">
-          <option value="admin">admin</option>
-          <option value="medico">medico</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-      </div>
-    </form>
-  </div></div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formUsuario">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input id="usuarioId" type="hidden">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo</label>
+            <input id="usuarioNom" class="form-control" placeholder="Nombre del usuario" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="usuarioEmail" class="form-control" type="email" placeholder="correo@hospital.com" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contrasena</label>
+            <input id="usuarioPass" class="form-control" type="password" placeholder="********">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <select id="usuarioRol" class="form-select">
+              <option value="admin">Administrador</option>
+              <option value="medico">Medico</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-add text-white">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Tabs
-function showTab(tab){
-  document.getElementById('pacientesTab').style.display = tab==='pacientes'? '' : 'none';
-  document.getElementById('medicosTab').style.display = tab==='medicos'? '' : 'none';
-  document.getElementById('citasTab').style.display = tab==='citas'? '' : 'none';
-  document.getElementById('usuariosTab').style.display = tab==='usuarios'? '' : 'none';
-  document.querySelectorAll('.sidebar .nav-link').forEach(e=>e.classList.remove('active'));
-  document.querySelector('.sidebar .nav-link[onclick="showTab(\''+tab+'\')"]').classList.add('active');
-}
+let userRol = "anonimo";
+let userProfileComplete = false;
+let userName = "";
+let citasChart = null;
+let especialidadesChart = null;
+
 const token = localStorage.getItem('token');
 if (!token) window.location.href = "login.html";
-let userRol = "anonimo";
-// Obtener usuario actual y configurar permisos
+
+// Reloj
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'});
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('es-CO', {weekday: 'long', day: 'numeric', month: 'short'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function showAlert(message, type, targetId) {
+  const alertDiv = document.getElementById(targetId);
+  if (!alertDiv) return;
+  alertDiv.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+  if (type !== 'danger') {
+    setTimeout(() => { alertDiv.innerHTML = ''; }, 5000);
+  }
+}
+
+function showTab(tab) {
+  ['inicioTab','pacientesTab','medicosTab','citasTab','usuariosTab','miPerfilTab'].forEach(t => {
+    document.getElementById(t).style.display = 'none';
+  });
+  document.getElementById(tab + 'Tab').style.display = '';
+
+  document.querySelectorAll('.sidebar .nav-link').forEach(e => e.classList.remove('active'));
+  const activeLink = document.querySelector(`.sidebar .nav-link[onclick="showTab('${tab}')"]`);
+  if (activeLink) activeLink.classList.add('active');
+
+  if (tab === 'miPerfil') loadMedicoProfileData();
+  if (tab === 'inicio') loadDashboardStats();
+}
+
+const navItems = {
+  inicio: document.getElementById("navItemInicio"),
+  pacientes: document.getElementById("navItemPacientes"),
+  medicos: document.getElementById("navItemMedicos"),
+  citas: document.getElementById("navItemCitas"),
+  usuarios: document.getElementById("navItemUsuarios"),
+  miPerfil: document.getElementById("navMiPerfil")
+};
+
+function hideAllDashboardElements() {
+  Object.values(navItems).forEach(item => { if (item) item.style.display = "none"; });
+  document.getElementById('adminSection').style.display = 'none';
+}
+
+function setupAdminDashboard() {
+  hideAllDashboardElements();
+  navItems.inicio.style.display = "";
+  navItems.pacientes.style.display = "";
+  navItems.medicos.style.display = "";
+  navItems.citas.style.display = "";
+  navItems.usuarios.style.display = "";
+  navItems.miPerfil.style.display = "none";
+  document.getElementById('adminSection').style.display = '';
+  showTab('inicio');
+  cargarPacientes(); cargarMedicos(); cargarCitas(); cargarUsuarios();
+  loadDashboardStats();
+}
+
+function setupMedicoDashboard() {
+  hideAllDashboardElements();
+  navItems.inicio.style.display = "";
+  navItems.pacientes.style.display = "";
+  navItems.citas.style.display = "";
+  navItems.miPerfil.style.display = "";
+  showTab('inicio');
+  cargarPacientes(); cargarCitas();
+  loadDashboardStats();
+}
+
+function setupMedicoIncompleteDashboard() {
+  hideAllDashboardElements();
+  navItems.miPerfil.style.display = "";
+}
+
+async function fillEspecialidadSelect(selectElement) {
+  if (!selectElement) return;
+  try {
+    const response = await fetch("/especialidades", { headers: { "Authorization": `Bearer ${token}` } });
+    if (!response.ok) throw new Error('Error');
+    const data = await response.json();
+    selectElement.innerHTML = data.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  } catch (error) {
+    console.error("Error cargando especialidades:", error);
+  }
+}
+
+async function loadDashboardStats() {
+  try {
+    const [pacientesRes, medicosRes, citasRes] = await Promise.all([
+      fetch("/pacientes", {headers:{"Authorization":`Bearer ${token}`}}),
+      fetch("/medicos", {headers:{"Authorization":`Bearer ${token}`}}),
+      fetch("/citas", {headers:{"Authorization":`Bearer ${token}`}})
+    ]);
+
+    const pacientes = await pacientesRes.json();
+    const medicos = await medicosRes.json();
+    const citas = await citasRes.json();
+
+    document.getElementById('statPacientes').textContent = pacientes.length;
+    document.getElementById('statMedicos').textContent = medicos.length;
+
+    const hoy = new Date().toISOString().split('T')[0];
+    const citasHoy = citas.filter(c => c.fecha && c.fecha.startsWith(hoy));
+    const citasPendientes = citas.filter(c => c.estado === 'programada');
+
+    document.getElementById('statCitasHoy').textContent = citasHoy.length;
+    document.getElementById('statCitasPendientes').textContent = citasPendientes.length;
+
+    // Grafico de citas
+    const programadas = citas.filter(c => c.estado === 'programada').length;
+    const realizadas = citas.filter(c => c.estado === 'realizada').length;
+    const canceladas = citas.filter(c => c.estado === 'cancelada').length;
+
+    if (citasChart) citasChart.destroy();
+    citasChart = new Chart(document.getElementById('citasChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Programadas', 'Realizadas', 'Canceladas'],
+        datasets: [{
+          data: [programadas, realizadas, canceladas],
+          backgroundColor: ['#667eea', '#38ef7d', '#f5576c'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // Grafico de especialidades
+    const espCount = {};
+    medicos.forEach(m => {
+      const esp = m.especialidad || 'Sin asignar';
+      espCount[esp] = (espCount[esp] || 0) + 1;
+    });
+
+    if (especialidadesChart) especialidadesChart.destroy();
+    especialidadesChart = new Chart(document.getElementById('especialidadesChart'), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(espCount),
+        datasets: [{
+          data: Object.values(espCount),
+          backgroundColor: ['#667eea', '#38ef7d', '#f5576c', '#4facfe', '#f093fb'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // Proximas citas
+    const proximasCitasDiv = document.getElementById('proximasCitas');
+    const citasFuturas = citas.filter(c => c.estado === 'programada').slice(0, 5);
+
+    if (citasFuturas.length === 0) {
+      proximasCitasDiv.innerHTML = '<p class="text-muted text-center py-3">No hay citas programadas</p>';
+    } else {
+      proximasCitasDiv.innerHTML = citasFuturas.map(c => `
+        <div class="activity-item">
+          <div class="activity-icon new"><i class="bi bi-calendar-event"></i></div>
+          <div class="flex-grow-1">
+            <strong>${c.paciente}</strong>
+            <small class="d-block text-muted">${c.medico} - ${new Date(c.fecha).toLocaleString('es-CO')}</small>
+          </div>
+          <span class="badge badge-${c.prioridad}">${c.prioridad}</span>
+        </div>
+      `).join('');
+    }
+
+  } catch (error) {
+    console.error("Error cargando estadisticas:", error);
+  }
+}
+
+async function checkAndHandleMedicoProfile() {
+  hideAllDashboardElements();
+  try {
+    const response = await fetch("/medicos/perfil", { headers: { "Authorization": `Bearer ${token}` } });
+    let medicoProfileData = null;
+
+    if (response.ok) {
+      medicoProfileData = await response.json();
+    }
+
+    let isComplete = false;
+    if (medicoProfileData) {
+      const profile = medicoProfileData.profile || medicoProfileData;
+      isComplete = profile.especialidad_id && profile.registro_medico && profile.telefono;
+    }
+
+    if (isComplete) {
+      userProfileComplete = true;
+      setupMedicoDashboard();
+      localStorage.setItem('profileAlertShown', 'true');
+    } else {
+      userProfileComplete = false;
+      setupMedicoIncompleteDashboard();
+
+      const alertShown = localStorage.getItem('profileAlertShown');
+      if (!alertShown) {
+        showAlert("Completa tu perfil profesional para acceder al sistema completo.", "warning", "topPageAlertContainer");
+        localStorage.setItem('profileAlertShown', 'true');
+      }
+      showTab('miPerfil');
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Inicializacion
 fetch("/api/user", {headers:{"Authorization":`Bearer ${token}`}})
-.then(r=>r.json())
-.then(data=>{
-    userRol = data.rol;
-    document.getElementById("navbarUser").textContent = `${data.nombre || "Anonimo"} (${data.rol})`;
-    document.getElementById("btnAddPaciente").style.display = ((userRol==="admin"||userRol==="medico")?"":"none");
-    document.getElementById("btnAddMedico").style.display = (userRol==="admin")?"":"none";
-    document.getElementById("btnAddCita").style.display = ((userRol==="admin"||userRol==="medico")?"":"none");
-    document.getElementById("btnAddUsuario").style.display = (userRol==="admin")?"":"none";
-    cargarPacientes(); cargarMedicos(); cargarCitas(); cargarUsuarios();
+.then(r => r.json())
+.then(async data => {
+  userRol = data.rol;
+  userName = data.nombre || "Usuario";
+
+  document.getElementById("navbarUser").textContent = data.nombre || "Usuario";
+  document.getElementById("navbarRol").textContent = data.rol === 'admin' ? 'Administrador' : 'Medico';
+  document.getElementById("userInitials").textContent = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById("welcomeText").textContent = `Bienvenido, ${userName}`;
+  document.getElementById("welcomeSubtext").textContent = new Date().toLocaleDateString('es-CO', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+
+  if (userRol === "admin") {
+    setupAdminDashboard();
+  } else if (userRol === "medico") {
+    await checkAndHandleMedicoProfile();
+  }
+})
+.catch(error => {
+  console.error("Error:", error);
+  window.location.href = "login.html";
 });
 
 // CRUD Pacientes
-document.getElementById("formPaciente").onsubmit = function(e){
+document.getElementById("formPaciente").onsubmit = function(e) {
   e.preventDefault();
   const id = pacienteId.value;
   const data = {
@@ -220,179 +1297,215 @@ document.getElementById("formPaciente").onsubmit = function(e){
     email: pacienteEmail.value
   };
   let url = "/pacientes", method = "POST";
-  if(id){ url = `/pacientes/${id}`; method = "PUT"; }
-  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
-  .then(r=>r.json()).then(resp=>{
-    alert(resp.msg); document.querySelector('#modalPaciente .btn-secondary').click();
+  if(id) { url = `/pacientes/${id}`; method = "PUT"; }
+  fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
+  .then(r => r.json()).then(resp => {
+    bootstrap.Modal.getInstance(document.getElementById('modalPaciente')).hide();
     cargarPacientes();
+    loadDashboardStats();
+    showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
   });
 };
-function cargarPacientes(){
-  fetch("/pacientes",{headers:{"Authorization":`Bearer ${token}`}})
-  .then(r=>r.json())
-  .then(data=>{
+
+function cargarPacientes() {
+  fetch("/pacientes", {headers:{"Authorization":`Bearer ${token}`}})
+  .then(r => r.json())
+  .then(data => {
     const tb = document.getElementById("tblPacientes");
     tb.innerHTML = "";
-    data.forEach(p=>{
+    data.forEach(p => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${p.id}</td><td>${p.documento}</td><td>${p.nombre}</td><td>${p.edad}</td><td>${p.genero}</td><td>${p.email}</td>
-      <td>
-      ${(userRol=="admin"||userRol=="medico")?`
-        <button onclick="editarPaciente(${p.id},'${p.documento}','${p.nombre}',${p.edad},'${p.genero}','${p.email}')" class="btn btn-warning btn-sm">Editar</button>
-        <button onclick="borrarPaciente(${p.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
-      </td>`;
+      tr.innerHTML = `
+        <td>${p.id}</td>
+        <td>${p.documento}</td>
+        <td>${p.nombre}</td>
+        <td>${p.edad || '-'}</td>
+        <td>${p.genero || '-'}</td>
+        <td>${p.email || '-'}</td>
+        <td>
+          ${(userRol=="admin" || userProfileComplete) ? `
+          <button onclick="editarPaciente(${p.id},'${p.documento}','${p.nombre}',${p.edad || 0},'${p.genero || ''}','${p.email || ''}')" class="btn btn-warning btn-action"><i class="bi bi-pencil"></i></button>
+          <button onclick="borrarPaciente(${p.id})" class="btn btn-danger btn-action"><i class="bi bi-trash"></i></button>
+          ` : ''}
+        </td>`;
       tb.appendChild(tr);
     });
   });
 }
 
-document.getElementById('btnAddMedico').addEventListener('click', fillEspecialidadSelect);
-
-function fillEspecialidadSelect() {
-  fetch("/especialidades",{headers:{"Authorization":`Bearer ${token}`}})
-  .then(r=>r.json())
-  .then(data=>{
-    medicoEspSel.innerHTML = data.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
-  });
-}
-
-
-function editarPaciente(id,doc,nom,edad,gen,email){
+function editarPaciente(id,doc,nom,edad,gen,email) {
   pacienteId.value=id; pacienteDoc.value=doc; pacienteNom.value=nom;
   pacienteEdad.value=edad; pacienteGen.value=gen; pacienteEmail.value=email;
   new bootstrap.Modal(document.getElementById("modalPaciente")).show();
 }
-function borrarPaciente(id){
-  if(confirm("¿Seguro que deseas eliminar?")){
-    fetch(`/pacientes/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
-    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarPacientes();});
+
+function borrarPaciente(id) {
+  if(confirm("Seguro que deseas eliminar este paciente?")) {
+    fetch(`/pacientes/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json()).then(resp => {
+      cargarPacientes();
+      loadDashboardStats();
+      showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    });
   }
 }
 
 // CRUD Medicos
-document.getElementById("formMedico").onsubmit = function(e){
+document.getElementById("btnAddMedico").addEventListener('click', () => fillEspecialidadSelect(document.getElementById('medicoEspSel')));
+
+document.getElementById("formMedico").onsubmit = function(e) {
   e.preventDefault();
   const id = medicoId.value;
-const data = {
-  nombre: medicoNom.value,
-  especialidad_id: medicoEspSel.value,
-  registro_medico: medicoReg.value,
-  telefono: medicoTel.value,
-  email: medicoEmail.value
-};
+  const data = {
+    nombre: medicoNom.value,
+    especialidad_id: medicoEspSel.value,
+    registro_medico: medicoReg.value,
+    telefono: medicoTel.value,
+    email: medicoEmail.value
+  };
   let url = "/medicos", method = "POST";
-  if(id){ url = `/medicos/${id}`; method = "PUT"; }
-  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
-  .then(r=>r.json()).then(resp=>{
-    alert(resp.msg); document.querySelector('#modalMedico .btn-secondary').click();
+  if(id) { url = `/medicos/${id}`; method = "PUT"; }
+  fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
+  .then(r => r.json()).then(resp => {
+    bootstrap.Modal.getInstance(document.getElementById('modalMedico')).hide();
     cargarMedicos();
+    loadDashboardStats();
+    showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
   });
 };
 
-function cargarMedicos(){
-  fetch("/medicos",{headers:{"Authorization":`Bearer ${token}`}})
-  .then(r=>r.json())
-  .then(data=>{
+function cargarMedicos() {
+  fetch("/medicos", {headers:{"Authorization":`Bearer ${token}`}})
+  .then(r => r.json())
+  .then(data => {
     const tb = document.getElementById("tblMedicos");
-    tb.innerHTML="";
-    data.forEach(m=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${m.id}</td><td>${m.nombre}</td><td>${m.especialidad}</td>
-      <td>${m.registro}</td><td>${m.telefono}</td><td>${m.email}</td>
-      <td>${(userRol=="admin")?`
-        <button onclick="editarMedico(${m.id},'${m.nombre}','${m.especialidad}','${m.registro}','${m.telefono}','${m.email}')" class="btn btn-warning btn-sm">Editar</button>
-        <button onclick="borrarMedico(${m.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}</td>`;
+    tb.innerHTML = "";
+    data.forEach(m => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${m.id}</td>
+        <td>${m.nombre}</td>
+        <td><span class="badge bg-info">${m.especialidad || '-'}</span></td>
+        <td>${m.registro_medico || '-'}</td>
+        <td>${m.telefono || '-'}</td>
+        <td>${m.email || '-'}</td>
+        <td>
+          ${userRol=="admin" ? `
+          <button onclick="editarMedico(${m.id},'${m.nombre}','${m.especialidad_id || ''}','${m.registro_medico || ''}','${m.telefono || ''}','${m.email || ''}')" class="btn btn-warning btn-action"><i class="bi bi-pencil"></i></button>
+          <button onclick="borrarMedico(${m.id})" class="btn btn-danger btn-action"><i class="bi bi-trash"></i></button>
+          ` : ''}
+        </td>`;
       tb.appendChild(tr);
     });
   });
 }
-function editarMedico(id,nom,esp,reg,tel,email){
-  medicoId.value=id; medicoNom.value=nom; medicoEsp.value=esp;
-  medicoReg.value=reg; medicoTel.value=tel; medicoEmail.value=email;
+
+async function editarMedico(id,nom,espId,reg,tel,email) {
+  medicoId.value=id; medicoNom.value=nom; medicoReg.value=reg; medicoTel.value=tel; medicoEmail.value=email;
+  await fillEspecialidadSelect(document.getElementById('medicoEspSel'));
+  medicoEspSel.value = espId;
   new bootstrap.Modal(document.getElementById("modalMedico")).show();
 }
-function borrarMedico(id){
-  if(confirm("¿Seguro que deseas eliminar?")){
-    fetch(`/medicos/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
-    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarMedicos();});
+
+function borrarMedico(id) {
+  if(confirm("Seguro que deseas eliminar este medico?")) {
+    fetch(`/medicos/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json()).then(resp => {
+      cargarMedicos();
+      loadDashboardStats();
+      showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    });
   }
 }
 
 // CRUD Citas
-document.getElementById("formCita").onsubmit = function(e){
+document.getElementById("formCita").onsubmit = function(e) {
   e.preventDefault();
   const id = citaId.value;
   const data = {
-  paciente_id: citaPacienteSel.value,
-  medico_id: citaMedicoSel.value,
-  fecha: citaFecha.value,
-  estado: citaEstado.value,
-  prioridad: citaPrioridad.value,
-  motivo: citaMotivo.value
-};
-  console.log(data); 
+    paciente_id: citaPacienteSel.value,
+    medico_id: citaMedicoSel.value,
+    fecha: citaFecha.value,
+    estado: citaEstado.value,
+    prioridad: citaPrioridad.value,
+    motivo: citaMotivo.value
+  };
   let url = "/citas", method = "POST";
-  if(id){ url = `/citas/${id}`; method = "PUT"; }
-  fetch(url, {
-      method: method,
-      headers: { "Content-Type":"application/json", "Authorization":`Bearer ${token}` },
-      body: JSON.stringify(data)
-  })
-  .then(r=>r.json()).then(resp=>{
-    alert(resp.msg); document.querySelector('#modalCita .btn-secondary').click();
+  if(id) { url = `/citas/${id}`; method = "PUT"; }
+  fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
+  .then(r => r.json()).then(resp => {
+    bootstrap.Modal.getInstance(document.getElementById('modalCita')).hide();
     cargarCitas();
+    loadDashboardStats();
+    showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
   });
 };
 
-function cargarCitas(){
-  fetch("/citas",{headers:{"Authorization":`Bearer ${token}`}})
-  .then(r=>r.json())
-  .then(data=>{
-    const tb=document.getElementById("tblCitas");
-    tb.innerHTML="";
-    data.forEach(c=>{
-      const tr=document.createElement("tr");
-      tr.innerHTML=`
-      <td>${c.id}</td><td>${c.paciente}</td><td>${c.medico}</td>
-      <td>${c.fecha}</td><td>${c.estado}</td><td>${c.prioridad}</td>
-      <td>${(userRol=="admin"||userRol=="medico")?`
-        <button onclick="editarCita(${c.id},'${c.paciente_id}','${c.medico_id}','${c.fecha}','${c.estado}','${c.prioridad}')" class="btn btn-warning btn-sm">Editar</button>
-        <button onclick="borrarCita(${c.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
-      </td>`;
+function cargarCitas() {
+  fetch("/citas", {headers:{"Authorization":`Bearer ${token}`}})
+  .then(r => r.json())
+  .then(data => {
+    const tb = document.getElementById("tblCitas");
+    tb.innerHTML = "";
+    data.forEach(c => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${c.id}</td>
+        <td>${c.paciente}</td>
+        <td>${c.medico}</td>
+        <td>${new Date(c.fecha).toLocaleString('es-CO')}</td>
+        <td><span class="badge badge-${c.estado}">${c.estado}</span></td>
+        <td><span class="badge badge-${c.prioridad}">${c.prioridad}</span></td>
+        <td>
+          ${(userRol=="admin" || userProfileComplete) ? `
+          <button onclick="editarCita(${c.id},'${c.paciente_id}','${c.medico_id}','${c.fecha}','${c.estado}','${c.prioridad}','${c.motivo}')" class="btn btn-warning btn-action"><i class="bi bi-pencil"></i></button>
+          <button onclick="borrarCita(${c.id})" class="btn btn-danger btn-action"><i class="bi bi-trash"></i></button>
+          ` : ''}
+        </td>`;
       tb.appendChild(tr);
     });
   });
 }
-// Select dinámico pacientes y médicos en modal cita
-function fillCitaSelects(){
-    fetch("/pacientes",{headers:{"Authorization":`Bearer ${token}`}})
-      .then(r=>r.json())
-      .then(data=>{
-        citaPacienteSel.innerHTML = data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-      });
-    fetch("/medicos",{headers:{"Authorization":`Bearer ${token}`}})
-      .then(r=>r.json())
-      .then(data=>{
-        citaMedicoSel.innerHTML = data.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
-      });
+
+function fillCitaSelects() {
+  fetch("/pacientes", {headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json())
+    .then(data => {
+      citaPacienteSel.innerHTML = data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    });
+  fetch("/medicos", {headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json())
+    .then(data => {
+      citaMedicoSel.innerHTML = data.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+    });
 }
 document.getElementById('btnAddCita').addEventListener('click', fillCitaSelects);
 
-function editarCita(id,pacId,medId,fecha,est,pri){
-  citaId.value=id; citaFecha.value=fecha; citaEstado.value=est; citaPrioridad.value=pri;
+function editarCita(id,pacId,medId,fecha,est,pri,motivo) {
+  citaId.value=id;
+  const formattedDate = new Date(fecha).toISOString().slice(0, 16);
+  citaFecha.value=formattedDate;
+  citaEstado.value=est;
+  citaPrioridad.value=pri;
+  citaMotivo.value=motivo;
   fillCitaSelects();
-  setTimeout(()=>{citaPacienteSel.value=pacId; citaMedicoSel.value=medId;},400); // espera por render
+  setTimeout(() => { citaPacienteSel.value=pacId; citaMedicoSel.value=medId; }, 400);
   new bootstrap.Modal(document.getElementById("modalCita")).show();
 }
-function borrarCita(id){
-  if(confirm("¿Seguro que deseas eliminar?")){
-    fetch(`/citas/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${token}`}})
-    .then(r=>r.json()).then(resp=>{alert(resp.msg); cargarCitas();});
+
+function borrarCita(id) {
+  if(confirm("Seguro que deseas eliminar esta cita?")) {
+    fetch(`/citas/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json()).then(resp => {
+      cargarCitas();
+      loadDashboardStats();
+      showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    });
   }
 }
 
 // CRUD Usuarios
-document.getElementById("formUsuario").onsubmit = function(e){
+document.getElementById("formUsuario").onsubmit = function(e) {
   e.preventDefault();
   const id = usuarioId.value;
   const data = {
@@ -402,55 +1515,143 @@ document.getElementById("formUsuario").onsubmit = function(e){
     rol: usuarioRol.value
   };
   let url = "/usuarios", method = "POST";
-  if(id){ url = `/usuarios/${id}`; method = "PUT"; }
-  fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify(data)})
-  .then(r=>r.json()).then(resp=>{
-    alert(resp.msg); document.querySelector('#modalUsuario .btn-secondary').click();
+  if(id) { url = `/usuarios/${id}`; method = "PUT"; }
+  fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
+  .then(r => r.json()).then(resp => {
+    bootstrap.Modal.getInstance(document.getElementById('modalUsuario')).hide();
     cargarUsuarios();
+    showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
   });
 };
-function cargarUsuarios(){
-  fetch("/usuarios",{headers:{"Authorization":`Bearer ${token}`}})
-  .then(r=>r.json())
-  .then(data=>{
+
+function cargarUsuarios() {
+  fetch("/usuarios", {headers:{"Authorization":`Bearer ${token}`}})
+  .then(r => r.json())
+  .then(data => {
     const tb = document.getElementById("tblUsuarios");
     tb.innerHTML = "";
-    data.forEach(u=>{
+    data.forEach(u => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-      <td>${u.id}</td>
-      <td>${u.nombre}</td>
-      <td>${u.email}</td>
-      <td>${u.rol}</td>
-      <td>
-        ${(userRol=="admin")?
-          `<button onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')" class="btn btn-warning btn-sm">Editar</button>
-           <button onclick="borrarUsuario(${u.id})" class="btn btn-danger btn-sm">Borrar</button>`:""}
-      </td>`;
+        <td>${u.id}</td>
+        <td>${u.nombre}</td>
+        <td>${u.email}</td>
+        <td><span class="badge ${u.rol === 'admin' ? 'bg-danger' : 'bg-primary'}">${u.rol}</span></td>
+        <td>
+          ${userRol=="admin" ? `
+          <button onclick="editarUsuario(${u.id},'${u.nombre}','${u.email}','${u.rol}')" class="btn btn-warning btn-action"><i class="bi bi-pencil"></i></button>
+          <button onclick="borrarUsuario(${u.id})" class="btn btn-danger btn-action"><i class="bi bi-trash"></i></button>
+          ` : ''}
+        </td>`;
       tb.appendChild(tr);
     });
   });
 }
-function editarUsuario(id, nom, email, rol){
+
+function editarUsuario(id, nom, email, rol) {
   usuarioId.value = id;
   usuarioNom.value = nom;
   usuarioEmail.value = email;
-  usuarioPass.value = ""; // solo cambia si se edita
+  usuarioPass.value = "";
   usuarioRol.value = rol;
   new bootstrap.Modal(document.getElementById("modalUsuario")).show();
 }
-function borrarUsuario(id){
-  if(confirm("¿Seguro que deseas eliminar?")){
-    fetch(`/usuarios/${id}`,{
-      method:"DELETE",
-      headers:{"Authorization":`Bearer ${token}`}
-    })
-    .then(r=>r.json())
-    .then(resp=>{
-      alert(resp.msg); cargarUsuarios();
+
+function borrarUsuario(id) {
+  if(confirm("Seguro que deseas eliminar este usuario?")) {
+    fetch(`/usuarios/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
+    .then(r => r.json()).then(resp => {
+      cargarUsuarios();
+      showAlert(resp.msg, 'success', 'topPageAlertContainer');
     });
   }
 }
+
+// Mi Perfil
+async function loadMedicoProfileData() {
+  try {
+    const userResponse = await fetch("/api/user", { headers: { "Authorization": `Bearer ${token}` } });
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      document.getElementById('profileName').textContent = userData.nombre || "-";
+      document.getElementById('profileEmail').textContent = userData.email || "-";
+      document.getElementById('profileAvatar').innerHTML = `<span style="font-size:2rem">${(userData.nombre || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)}</span>`;
+    }
+  } catch (e) {
+    console.error("Error:", e);
+  }
+
+  try {
+    const response = await fetch("/medicos/perfil", { headers: { "Authorization": `Bearer ${token}` } });
+    await fillEspecialidadSelect(document.getElementById('medicoPerfilEspecialidad'));
+
+    if (response.status === 404) {
+      document.getElementById('medicoPerfilRegistro').value = "";
+      document.getElementById('medicoPerfilTelefono').value = "";
+      return;
+    }
+
+    if (!response.ok) throw new Error('Error');
+
+    const data = await response.json();
+    const profile = data.profile || data;
+
+    document.getElementById('medicoPerfilRegistro').value = profile.registro_medico || "";
+    document.getElementById('medicoPerfilTelefono').value = profile.telefono || "";
+
+    if (profile.especialidad_id) {
+      document.getElementById('medicoPerfilEspecialidad').value = profile.especialidad_id;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    showAlert("Error al cargar perfil.", "danger", "medicoPerfilAlert");
+  }
+}
+
+document.getElementById("formMedicoPerfil").onsubmit = async function(e) {
+  e.preventDefault();
+
+  const data = {
+    especialidad_id: medicoPerfilEspecialidad.value,
+    registro_medico: medicoPerfilRegistro.value,
+    telefono: medicoPerfilTelefono.value
+  };
+
+  if (!data.especialidad_id || !data.registro_medico || !data.telefono) {
+    showAlert("Todos los campos son obligatorios.", "danger", "medicoPerfilAlert");
+    return;
+  }
+
+  try {
+    const response = await fetch("/medicos/perfil", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+
+    const resp = await response.json();
+
+    if (response.ok) {
+      showAlert("Perfil guardado correctamente.", "success", "medicoPerfilAlert");
+      userProfileComplete = true;
+      setupMedicoDashboard();
+      loadMedicoProfileData();
+    } else {
+      showAlert(`Error: ${resp.msg}`, "danger", "medicoPerfilAlert");
+    }
+  } catch (error) {
+    showAlert("Error de conexion.", "danger", "medicoPerfilAlert");
+  }
+};
+
+// Limpiar modales al cerrar
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('hidden.bs.modal', function() {
+    this.querySelector('form')?.reset();
+    const hiddenId = this.querySelector('input[type="hidden"]');
+    if (hiddenId) hiddenId.value = '';
+  });
+});
 </script>
 </body>
 </html>

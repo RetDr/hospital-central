@@ -79,7 +79,7 @@ CREATE TABLE `especialidades` (
 
 LOCK TABLES `especialidades` WRITE;
 /*!40000 ALTER TABLE `especialidades` DISABLE KEYS */;
-INSERT INTO `especialidades` VALUES (1,'General');
+INSERT INTO `especialidades` VALUES (1,'Medicina General'),(2,'Cardiologia'),(3,'Pediatria'),(4,'Dermatologia'),(5,'Neurologia');
 /*!40000 ALTER TABLE `especialidades` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -6,38 +6,70 @@
   <title>Registro Hospital Central</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background: linear-gradient(135deg, #3CA55C, #B5AC49 100%); min-height: 100vh; }
-    .card-register { max-width: 440px; margin:auto; box-shadow: 0 2px 18px #2227; border-radius: 20px;}
-    .hospital-logo { width: 70px; margin-bottom: 16px;}
-    .submit-btn { background: linear-gradient(90deg, #FFD200 55%, #FFA000 100%); border: none; color: #222; }
+    body { background: linear-gradient(135deg, #16222A, #3A6073 90%); min-height: 100vh; }
+    .card-auth { max-width: 480px; margin:auto; box-shadow: 0 2px 18px #2227; border-radius: 20px;}
+    .hospital-logo { width: 80px; margin-bottom: 16px; }
+    .submit-btn { background: linear-gradient(90deg, #FFD200 55%, #FFA000 100%); border: none; color: #222;}
     .submit-btn:hover { background: linear-gradient(90deg, #FFA000 40%, #FFD200 100%); }
+    .alt-link { color: #FFA000; text-decoration: underline; cursor:pointer; }
+    .password-requirements { font-size: 0.8rem; color: #666; }
+    .requirement { display: flex; align-items: center; gap: 5px; }
+    .requirement.valid { color: #28a745; }
+    .requirement.invalid { color: #dc3545; }
+    .strength-bar { height: 5px; border-radius: 3px; transition: all 0.3s; }
+    .strength-weak { background: #dc3545; width: 33%; }
+    .strength-medium { background: #ffc107; width: 66%; }
+    .strength-strong { background: #28a745; width: 100%; }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <div class="card card-register p-4">
+  <div class="container py-4">
+    <div class="card card-auth p-4">
       <img src="https://img.icons8.com/stickers/100/hospital-3.png" alt="hospital" class="hospital-logo mx-auto d-block rounded-circle">
-      <h3 class="text-center mb-1">Registro Hospital Central</h3>
+      <h3 class="text-center mb-3">Registro de Medico</h3>
       <form id="registerForm">
         <div class="form-group mb-3">
-          <input type="text" class="form-control" id="registerNombre" placeholder="Nombre completo" required>
+          <label for="registerNombre" class="form-label">Nombre completo</label>
+          <input type="text" class="form-control" id="registerNombre" placeholder="Dr. Juan Perez" required>
         </div>
         <div class="form-group mb-3">
-          <input type="email" class="form-control" id="registerEmail" placeholder="Correo institucional" required>
+          <label for="registerEmail" class="form-label">Correo institucional</label>
+          <input type="email" class="form-control" id="registerEmail" placeholder="correo@hospital.com" required>
         </div>
         <div class="form-group mb-3">
-          <input type="password" class="form-control" id="registerPassword" placeholder="Contraseña" required>
-        </div>
-        <div class="form-group mb-3">
-          <select class="form-select" id="registerRol" required>
-            <option value="" disabled selected>Tipo de Usuario</option>
-            <option value="medico">Médico</option>
-            <option value="admin">Administrador</option>
+          <label for="registerEspecialidad" class="form-label">Especialidad</label>
+          <select class="form-select" id="registerEspecialidad" required>
+            <option value="" disabled selected>Seleccione especialidad</option>
           </select>
         </div>
-        <button type="submit" class="btn submit-btn w-100 mb-2">Crear cuenta</button>
-        <div class="text-center">
-          <a href="login.html" class="link-dark">¿Ya tienes cuenta? Iniciar sesión</a>
+        <div class="form-group mb-3">
+          <label for="registerRegistroMedico" class="form-label">Registro Medico (opcional)</label>
+          <input type="text" class="form-control" id="registerRegistroMedico" placeholder="RM-001">
+        </div>
+        <div class="form-group mb-3">
+          <label for="registerTelefono" class="form-label">Telefono (opcional)</label>
+          <input type="tel" class="form-control" id="registerTelefono" placeholder="3001234567">
+        </div>
+        <div class="form-group mb-3">
+          <label for="registerPassword" class="form-label">Contraseña</label>
+          <input type="password" class="form-control" id="registerPassword" placeholder="********" required>
+          <div class="strength-bar mt-1" id="strengthBar"></div>
+          <div class="password-requirements mt-2">
+            <div class="requirement" id="reqLength"><span class="icon">&#10007;</span> Minimo 8 caracteres</div>
+            <div class="requirement" id="reqUpper"><span class="icon">&#10007;</span> Una mayuscula</div>
+            <div class="requirement" id="reqLower"><span class="icon">&#10007;</span> Una minuscula</div>
+            <div class="requirement" id="reqNumber"><span class="icon">&#10007;</span> Un numero</div>
+            <div class="requirement" id="reqSpecial"><span class="icon">&#10007;</span> Un caracter especial (!@#$%^&*)</div>
+          </div>
+        </div>
+        <div class="form-group mb-3">
+          <label for="registerConfirmPassword" class="form-label">Confirmar contraseña</label>
+          <input type="password" class="form-control" id="registerConfirmPassword" placeholder="********" required>
+          <div id="passwordMatch" class="small mt-1"></div>
+        </div>
+        <button type="submit" class="btn submit-btn w-100 mb-2" id="submitBtn" disabled>Crear cuenta</button>
+        <div class="text-center mt-2">
+          <a href="login.html" class="alt-link">Ya tienes cuenta? Iniciar sesion</a>
         </div>
       </form>
       <div id="registerError" class="alert alert-danger mt-2 d-none"></div>
@@ -45,24 +77,147 @@
     </div>
   </div>
 <script>
+// Cargar especialidades al iniciar
+async function cargarEspecialidades() {
+  try {
+    const response = await fetch("/api/especialidades-publicas");
+    const data = await response.json();
+    const select = document.getElementById("registerEspecialidad");
+    select.innerHTML = '<option value="" disabled selected>Seleccione especialidad</option>';
+    data.forEach(esp => {
+      select.innerHTML += `<option value="${esp.id}">${esp.nombre}</option>`;
+    });
+  } catch (error) {
+    console.error("Error cargando especialidades:", error);
+  }
+}
+cargarEspecialidades();
+
+// Validacion de contrasena en tiempo real
+const passwordInput = document.getElementById("registerPassword");
+const confirmInput = document.getElementById("registerConfirmPassword");
+const submitBtn = document.getElementById("submitBtn");
+
+function validatePassword(password) {
+  const requirements = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+  };
+
+  // Actualizar indicadores visuales
+  updateRequirement("reqLength", requirements.length);
+  updateRequirement("reqUpper", requirements.upper);
+  updateRequirement("reqLower", requirements.lower);
+  updateRequirement("reqNumber", requirements.number);
+  updateRequirement("reqSpecial", requirements.special);
+
+  // Calcular fuerza
+  const passed = Object.values(requirements).filter(Boolean).length;
+  const strengthBar = document.getElementById("strengthBar");
+
+  if (passed <= 2) {
+    strengthBar.className = "strength-bar mt-1 strength-weak";
+  } else if (passed <= 4) {
+    strengthBar.className = "strength-bar mt-1 strength-medium";
+  } else {
+    strengthBar.className = "strength-bar mt-1 strength-strong";
+  }
+
+  return Object.values(requirements).every(Boolean);
+}
+
+function updateRequirement(elementId, isValid) {
+  const el = document.getElementById(elementId);
+  el.classList.toggle("valid", isValid);
+  el.classList.toggle("invalid", !isValid);
+  el.querySelector(".icon").innerHTML = isValid ? "&#10003;" : "&#10007;";
+}
+
+function checkPasswordMatch() {
+  const password = passwordInput.value;
+  const confirm = confirmInput.value;
+  const matchDiv = document.getElementById("passwordMatch");
+
+  if (confirm.length === 0) {
+    matchDiv.textContent = "";
+    return false;
+  }
+
+  if (password === confirm) {
+    matchDiv.textContent = "Las contrasenas coinciden";
+    matchDiv.className = "small mt-1 text-success";
+    return true;
+  } else {
+    matchDiv.textContent = "Las contrasenas no coinciden";
+    matchDiv.className = "small mt-1 text-danger";
+    return false;
+  }
+}
+
+function validateForm() {
+  const passwordValid = validatePassword(passwordInput.value);
+  const passwordsMatch = checkPasswordMatch();
+  const nombre = document.getElementById("registerNombre").value.trim();
+  const email = document.getElementById("registerEmail").value.trim();
+  const especialidad = document.getElementById("registerEspecialidad").value;
+
+  submitBtn.disabled = !(passwordValid && passwordsMatch && nombre && email && especialidad);
+}
+
+passwordInput.addEventListener("input", validateForm);
+confirmInput.addEventListener("input", validateForm);
+document.getElementById("registerNombre").addEventListener("input", validateForm);
+document.getElementById("registerEmail").addEventListener("input", validateForm);
+document.getElementById("registerEspecialidad").addEventListener("change", validateForm);
+
+// Enviar formulario
 document.getElementById("registerForm").addEventListener("submit", async function(e){
   e.preventDefault();
-  const nombre = document.getElementById("registerNombre").value;
-  const email = document.getElementById("registerEmail").value;
+
+  const errorDiv = document.getElementById("registerError");
+  const successDiv = document.getElementById("registerSuccess");
+  errorDiv.classList.add("d-none");
+  successDiv.classList.add("d-none");
+
+  const nombre = document.getElementById("registerNombre").value.trim();
+  const email = document.getElementById("registerEmail").value.trim();
   const password = document.getElementById("registerPassword").value;
-  const rol = document.getElementById("registerRol").value;
-  const response = await fetch("/api/register", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({nombre, email, password, rol})
-  });
-  const data = await response.json();
-  if(response.ok){
-    document.getElementById("registerSuccess").textContent = "Registro exitoso, inicia sesión.";
-    document.getElementById("registerSuccess").classList.remove("d-none");
-    setTimeout(()=>{ window.location.href = "login.html"; }, 1500);
-  }else{
-    document.getElementById("registerError").textContent = data.msg || "Error al registrar";
-    document.getElementById("registerError").classList.remove("d-none");
+  const confirm_password = document.getElementById("registerConfirmPassword").value;
+  const especialidad_id = document.getElementById("registerEspecialidad").value;
+  const registro_medico = document.getElementById("registerRegistroMedico").value.trim();
+  const telefono = document.getElementById("registerTelefono").value.trim();
+
+  try {
+    const response = await fetch("/api/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        nombre,
+        email,
+        password,
+        confirm_password,
+        especialidad_id,
+        registro_medico,
+        telefono
+      })
+    });
+
+    const data = await response.json();
+
+    if(response.ok){
+      successDiv.textContent = data.msg || "Registro exitoso, redirigiendo...";
+      successDiv.classList.remove("d-none");
+      setTimeout(() => { window.location.href = "login.html"; }, 2000);
+    } else {
+      errorDiv.textContent = data.msg || "Error al registrar";
+      errorDiv.classList.remove("d-none");
+    }
+  } catch (error) {
+    errorDiv.textContent = "Error de conexion. Intente nuevamente.";
+    errorDiv.classList.remove("d-none");
   }
 });
 </script>

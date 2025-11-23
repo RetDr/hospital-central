@@ -40,8 +40,8 @@ def crear_cita():
         if fecha_obj <= datetime.now():
             return jsonify({'msg': 'La fecha debe ser futura'}), 400
         # Validar estado
-        if data['estado'] not in ['programada', 'realizada', 'cancelada']:
-            return jsonify({'msg': 'Estado no válido'}), 400
+        if data['estado'] not in ['programada', 'atendida', 'cancelada']:
+            return jsonify({'msg': 'Estado no valido'}), 400
         # Validar prioridad
         if data['prioridad'] not in ['baja', 'media', 'alta']:
             return jsonify({'msg': 'Prioridad no válida'}), 400
@@ -75,44 +75,51 @@ def editar_cita(id):
     if not data:
         return jsonify({'msg': 'Datos no recibidos'}), 400
 
-    try:
-        fecha_str = data.get('fecha', '')
-        if 'T' in fecha_str:
-            fecha_obj = datetime.fromisoformat(fecha_str.replace('Z', ''))
-        else:
-            fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+    paciente_id = data.get('paciente_id')
+    medico_id = data.get('medico_id')
+    fecha_str = data.get('fecha', '')
+    estado = data.get('estado', 'programada')
+    prioridad = data.get('prioridad', 'media')
+    motivo = data.get('motivo', '')
 
-        estado = data.get('estado', 'programada')
-        if estado not in ['programada', 'realizada', 'cancelada', 'atendida']:
-            return jsonify({'msg': 'Estado no valido'}), 400
+    if not paciente_id or not medico_id or not fecha_str:
+        return jsonify({'msg': 'Paciente, medico y fecha son requeridos'}), 400
 
-        prioridad = data.get('prioridad', 'media')
-        if prioridad not in ['baja', 'media', 'alta']:
-            return jsonify({'msg': 'Prioridad no valida'}), 400
+    valid_states = ['programada', 'atendida', 'cancelada']
+    if estado not in valid_states:
+        return jsonify({'msg': 'Estado no valido'}), 400
 
-    except Exception as e:
-        return jsonify({'msg': f'Error de formato: {str(e)}'}), 400
+    valid_priorities = ['baja', 'media', 'alta']
+    if prioridad not in valid_priorities:
+        return jsonify({'msg': 'Prioridad no valida'}), 400
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id FROM pacientes WHERE id=%s", (data.get('paciente_id'),))
-    if not cursor.fetchone():
-        cursor.close(); conn.close()
-        return jsonify({'msg': 'Paciente no existe'}), 404
+    try:
+        cursor.execute("SELECT id FROM citas WHERE id=%s", (id,))
+        if not cursor.fetchone():
+            return jsonify({'msg': 'Cita no encontrada'}), 404
 
-    cursor.execute("SELECT id FROM medicos WHERE id=%s", (data.get('medico_id'),))
-    if not cursor.fetchone():
-        cursor.close(); conn.close()
-        return jsonify({'msg': 'Medico no existe'}), 404
+        cursor.execute("SELECT id FROM pacientes WHERE id=%s", (paciente_id,))
+        if not cursor.fetchone():
+            return jsonify({'msg': 'Paciente no existe'}), 404
 
-    cursor.execute("""
-        UPDATE citas SET paciente_id=%s, medico_id=%s, fecha=%s, estado=%s, motivo=%s, prioridad=%s
-        WHERE id=%s
-    """, (data.get('paciente_id'), data.get('medico_id'), fecha_str, estado, data.get('motivo', ''), prioridad, id))
-    conn.commit()
-    cursor.close(); conn.close()
-    return jsonify({'msg': 'Cita actualizada'}), 200
+        cursor.execute("SELECT id FROM medicos WHERE id=%s", (medico_id,))
+        if not cursor.fetchone():
+            return jsonify({'msg': 'Medico no existe'}), 404
+
+        cursor.execute("""
+            UPDATE citas SET paciente_id=%s, medico_id=%s, fecha=%s, estado=%s, motivo=%s, prioridad=%s
+            WHERE id=%s
+        """, (paciente_id, medico_id, fecha_str, estado, motivo, prioridad, id))
+
+        return jsonify({'msg': 'Cita actualizada'}), 200
+    except Exception as e:
+        return jsonify({'msg': f'Error: {str(e)}'}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 # BORRAR
 @citas_bp.route('/citas/<int:id>', methods=['DELETE'])

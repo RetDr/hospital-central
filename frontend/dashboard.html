@@ -239,7 +239,7 @@
     }
 
     .badge-programada { background: #e3f2fd; color: #1976d2; }
-    .badge-realizada { background: #e8f5e9; color: #388e3c; }
+    .badge-atendida { background: #e8f5e9; color: #388e3c; }
     .badge-cancelada { background: #ffebee; color: #d32f2f; }
     .badge-alta { background: #ffebee; color: #d32f2f; }
     .badge-media { background: #fff3e0; color: #f57c00; }
@@ -966,7 +966,7 @@
               <label class="form-label">Estado</label>
               <select id="citaEstado" class="form-select" required>
                 <option value="programada">Programada</option>
-                <option value="realizada">Realizada</option>
+                <option value="atendida">Atendida</option>
                 <option value="cancelada">Cancelada</option>
               </select>
             </div>
@@ -1155,16 +1155,16 @@ async function loadDashboardStats() {
 
     // Grafico de citas
     const programadas = citas.filter(c => c.estado === 'programada').length;
-    const realizadas = citas.filter(c => c.estado === 'realizada').length;
+    const atendidas = citas.filter(c => c.estado === 'atendida').length;
     const canceladas = citas.filter(c => c.estado === 'cancelada').length;
 
     if (citasChart) citasChart.destroy();
     citasChart = new Chart(document.getElementById('citasChart'), {
       type: 'doughnut',
       data: {
-        labels: ['Programadas', 'Realizadas', 'Canceladas'],
+        labels: ['Programadas', 'Atendidas', 'Canceladas'],
         datasets: [{
-          data: [programadas, realizadas, canceladas],
+          data: [programadas, atendidas, canceladas],
           backgroundColor: ['#667eea', '#38ef7d', '#f5576c'],
           borderWidth: 0
         }]
@@ -1299,11 +1299,30 @@ document.getElementById("formPaciente").onsubmit = function(e) {
   let url = "/pacientes", method = "POST";
   if(id) { url = `/pacientes/${id}`; method = "PUT"; }
   fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
-  .then(r => r.json()).then(resp => {
+  .then(async r => {
+    if (r.ok) {
+      return r.json();
+    } else {
+      const errorText = await r.text();
+      let errorMessage = `Error: ${r.status} ${r.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.msg || errorJson.message || errorMessage;
+      } catch (jsonError) {
+        errorMessage = errorText || 'Ocurrió un error inesperado al procesar al paciente.';
+      }
+      showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+      throw new Error(errorMessage); // Detener el flujo
+    }
+  })
+  .then(resp => {
     bootstrap.Modal.getInstance(document.getElementById('modalPaciente')).hide();
     cargarPacientes();
     loadDashboardStats();
     showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
+  })
+  .catch(error => {
+    console.error("Error en operacion de paciente:", error);
   });
 };
 
@@ -1342,10 +1361,29 @@ function editarPaciente(id,doc,nom,edad,gen,email) {
 function borrarPaciente(id) {
   if(confirm("Seguro que deseas eliminar este paciente?")) {
     fetch(`/pacientes/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
-    .then(r => r.json()).then(resp => {
+    .then(async r => {
+      if (r.ok) {
+        return r.json();
+      } else {
+        const errorText = await r.text();
+        let errorMessage = `Error: ${r.status} ${r.statusText}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.msg || errorJson.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = errorText || 'Ocurrió un error inesperado al eliminar al paciente.';
+        }
+        showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+        throw new Error(errorMessage);
+      }
+    })
+    .then(resp => {
       cargarPacientes();
       loadDashboardStats();
       showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    })
+    .catch(error => {
+      console.error("Error al borrar paciente:", error);
     });
   }
 }
@@ -1366,11 +1404,30 @@ document.getElementById("formMedico").onsubmit = function(e) {
   let url = "/medicos", method = "POST";
   if(id) { url = `/medicos/${id}`; method = "PUT"; }
   fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
-  .then(r => r.json()).then(resp => {
+  .then(async r => {
+    if (r.ok) {
+      return r.json();
+    } else {
+      const errorText = await r.text();
+      let errorMessage = `Error: ${r.status} ${r.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.msg || errorJson.message || errorMessage;
+      } catch (jsonError) {
+        errorMessage = errorText || 'Ocurrió un error inesperado al procesar al médico.';
+      }
+      showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+      throw new Error(errorMessage);
+    }
+  })
+  .then(resp => {
     bootstrap.Modal.getInstance(document.getElementById('modalMedico')).hide();
     cargarMedicos();
     loadDashboardStats();
     showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
+  })
+  .catch(error => {
+    console.error("Error en operacion de medico:", error);
   });
 };
 
@@ -1410,10 +1467,29 @@ async function editarMedico(id,nom,espId,reg,tel,email) {
 function borrarMedico(id) {
   if(confirm("Seguro que deseas eliminar este medico?")) {
     fetch(`/medicos/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
-    .then(r => r.json()).then(resp => {
+    .then(async r => {
+      if (r.ok) {
+        return r.json();
+      } else {
+        const errorText = await r.text();
+        let errorMessage = `Error: ${r.status} ${r.statusText}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.msg || errorJson.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = errorText || 'Ocurrió un error inesperado al eliminar al médico.';
+        }
+        showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+        throw new Error(errorMessage);
+      }
+    })
+    .then(resp => {
       cargarMedicos();
       loadDashboardStats();
       showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    })
+    .catch(error => {
+      console.error("Error al borrar médico:", error);
     });
   }
 }
@@ -1433,11 +1509,31 @@ document.getElementById("formCita").onsubmit = function(e) {
   let url = "/citas", method = "POST";
   if(id) { url = `/citas/${id}`; method = "PUT"; }
   fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
-  .then(r => r.json()).then(resp => {
+  .then(async r => {
+    if (r.ok) {
+      return r.json();
+    } else {
+      const errorText = await r.text();
+      let errorMessage = `Error: ${r.status} ${r.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.msg || errorJson.message || errorMessage;
+      } catch (jsonError) {
+        errorMessage = errorText || 'Ocurrió un error inesperado al procesar la cita.';
+      }
+      showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+      throw new Error(errorMessage); // Detener el flujo
+    }
+  })
+  .then(resp => {
     bootstrap.Modal.getInstance(document.getElementById('modalCita')).hide();
     cargarCitas();
     loadDashboardStats();
     showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
+  })
+  .catch(error => {
+    console.error("Error en operacion de cita:", error);
+    showAlert("Error al actualizar la cita. Intenta de nuevo o contacta a soporte.", 'danger', 'topPageAlertContainer');
   });
 };
 
@@ -1496,10 +1592,29 @@ function editarCita(id,pacId,medId,fecha,est,pri,motivo) {
 function borrarCita(id) {
   if(confirm("Seguro que deseas eliminar esta cita?")) {
     fetch(`/citas/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
-    .then(r => r.json()).then(resp => {
+    .then(async r => {
+      if (r.ok) {
+        return r.json();
+      } else {
+        const errorText = await r.text();
+        let errorMessage = `Error: ${r.status} ${r.statusText}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.msg || errorJson.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = errorText || 'Ocurrió un error inesperado al eliminar la cita.';
+        }
+        showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+        throw new Error(errorMessage);
+      }
+    })
+    .then(resp => {
       cargarCitas();
       loadDashboardStats();
       showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    })
+    .catch(error => {
+      console.error("Error al borrar cita:", error);
     });
   }
 }
@@ -1517,10 +1632,29 @@ document.getElementById("formUsuario").onsubmit = function(e) {
   let url = "/usuarios", method = "POST";
   if(id) { url = `/usuarios/${id}`; method = "PUT"; }
   fetch(url, {method, headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`}, body:JSON.stringify(data)})
-  .then(r => r.json()).then(resp => {
+  .then(async r => {
+    if (r.ok) {
+      return r.json();
+    } else {
+      const errorText = await r.text();
+      let errorMessage = `Error: ${r.status} ${r.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.msg || errorJson.message || errorMessage;
+      } catch (jsonError) {
+        errorMessage = errorText || 'Ocurrió un error inesperado al procesar al usuario.';
+      }
+      showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+      throw new Error(errorMessage);
+    }
+  })
+  .then(resp => {
     bootstrap.Modal.getInstance(document.getElementById('modalUsuario')).hide();
     cargarUsuarios();
     showAlert(resp.msg || 'Operacion exitosa', 'success', 'topPageAlertContainer');
+  })
+  .catch(error => {
+    console.error("Error en operacion de usuario:", error);
   });
 };
 
@@ -1560,9 +1694,28 @@ function editarUsuario(id, nom, email, rol) {
 function borrarUsuario(id) {
   if(confirm("Seguro que deseas eliminar este usuario?")) {
     fetch(`/usuarios/${id}`, {method:"DELETE", headers:{"Authorization":`Bearer ${token}`}})
-    .then(r => r.json()).then(resp => {
+    .then(async r => {
+      if (r.ok) {
+        return r.json();
+      } else {
+        const errorText = await r.text();
+        let errorMessage = `Error: ${r.status} ${r.statusText}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.msg || errorJson.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = errorText || 'Ocurrió un error inesperado al eliminar al usuario.';
+        }
+        showAlert(errorMessage, 'danger', 'topPageAlertContainer');
+        throw new Error(errorMessage);
+      }
+    })
+    .then(resp => {
       cargarUsuarios();
       showAlert(resp.msg, 'success', 'topPageAlertContainer');
+    })
+    .catch(error => {
+      console.error("Error al borrar usuario:", error);
     });
   }
 }
@@ -1629,15 +1782,22 @@ document.getElementById("formMedicoPerfil").onsubmit = async function(e) {
       body: JSON.stringify(data)
     });
 
-    const resp = await response.json();
-
     if (response.ok) {
+      const resp = await response.json();
       showAlert("Perfil guardado correctamente.", "success", "medicoPerfilAlert");
       userProfileComplete = true;
       setupMedicoDashboard();
       loadMedicoProfileData();
     } else {
-      showAlert(`Error: ${resp.msg}`, "danger", "medicoPerfilAlert");
+      const errorText = await response.text();
+      let errorMessage = `Error: ${response.status} ${response.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.msg || errorJson.message || errorMessage;
+      } catch (jsonError) {
+        errorMessage = errorText || 'Ocurrió un error inesperado al guardar el perfil.';
+      }
+      showAlert(errorMessage, "danger", "medicoPerfilAlert");
     }
   } catch (error) {
     showAlert("Error de conexion.", "danger", "medicoPerfilAlert");
